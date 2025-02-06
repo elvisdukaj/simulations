@@ -21,3 +21,4 @@ PointerAlignment: Left
 CompactNamespaces: true
 NamespaceIndentation: None
 FixNamespaceComments: true
+PackConstructorInitializers: NextLine
