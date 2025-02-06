@@ -1,0 +1,8 @@
+# build temporary
+**/build/
+**/CMakeUserPresets.json
+**/compile_commands.json
+
+# IDEs
+**/.cache/
+**/.idea
