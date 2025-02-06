@@ -11,10 +11,13 @@ BasedOnStyle:  LLVM
 TabWidth:        2
 IndentWidth:     2
 UseTab:          Always
-ColumnLimit: 120
+ColumnLimit: 160
 
 # Other languages JavaScript, Proto
 
 ---
 Language: Cpp
 PointerAlignment: Left
+CompactNamespaces: true
+NamespaceIndentation: None
+FixNamespaceComments: true
