@@ -4,6 +4,7 @@ module;
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_render.h>
 
+#include <algorithm>
 #include <cmath>
 #include <numbers>
 #include <print>
@@ -12,23 +13,6 @@ export module Game;
 
 export {
 	namespace Game {
-
-	template <typename T>
-	concept arithmetic = std::is_arithmetic_v<T>;
-
-	template <arithmetic T> struct Rect {
-		T x;
-		T y;
-		T width;
-		T height;
-	};
-
-	template <arithmetic T, std::floating_point Color = float> struct FilledRectangle {
-		Rect<T> shape;
-		Color color[4];
-	};
-
-	enum class PongState { CONTINUE, FAILURE, TERMINATE_WITH_SUCCESS };
 
 	struct color4 {
 		float r, g, b, a;
@@ -85,7 +69,7 @@ export {
 			return SDL_AppResult::SDL_APP_CONTINUE;
 		}
 
-		[[nodiscard]] SDL_AppResult update() const noexcept {
+		[[nodiscard]] SDL_AppResult update() noexcept {
 			SDL_SetRenderDrawColorFloat(renderer, 1.0f, 1.0f, 1.0f, 1.0f);
 			SDL_RenderClear(renderer);
 
@@ -97,6 +81,8 @@ export {
 			SDL_RenderFillRect(renderer, &border_bottom.shape);
 			SDL_SetRenderDrawColorFloat(renderer, border_top.color.r, border_top.color.g, border_top.color.b, border_top.color.a);
 			SDL_RenderFillRect(renderer, &border_top.shape);
+
+			pad.shape.x = std::clamp(pad.shape.x, border_thickness, screen_width - border_thickness - pad.shape.w);
 
 			SDL_SetRenderDrawColorFloat(renderer, pad.color.r, pad.color.g, pad.color.b, pad.color.a);
 			SDL_RenderFillRect(renderer, &pad.shape);
@@ -110,15 +96,47 @@ export {
 		explicit App(SDL_Window* window, SDL_Renderer* renderer)
 				: window{window},
 					renderer(renderer),
-					border_left{.shape = {.x = 0, .y = 0, .w = border_thickness, .h = screen_height}, .color = red},
-					border_right{.shape = {.x = screen_width - border_thickness, .y = 0, .w = border_thickness, .h = screen_height}, .color = red},
+					border_left{
+							.shape =
+									{
+											.x = 0,
+											.y = 0,
+											.w = border_thickness,
+											.h = screen_height,
+									},
+							.color = red,
+					},
+					border_right{
+							.shape =
+									{
+											.x = screen_width - border_thickness,
+											.y = 0,
+											.w = border_thickness,
+											.h = screen_height,
+									},
+							.color = red,
+					},
 					border_top{.shape = {.x = 0, .y = 0, .w = screen_width, .h = border_thickness}, .color = red},
-					border_bottom{.shape = {.x = 0, .y = screen_height - border_thickness, .w = screen_width, .h = border_thickness}, .color = red},
-					pad{.shape = {.x = (screen_width - 2 * border_thickness - border_thickness) / 2.0f + border_thickness,
-												.y = (screen_height - 2 * border_thickness - border_thickness) / 2.0f + border_thickness,
-												.w = pad_length,
-												.h = border_thickness},
-							.color = blue} {}
+					border_bottom{
+							.shape =
+									{
+											.x = 0,
+											.y = screen_height - border_thickness,
+											.w = screen_width,
+											.h = border_thickness,
+									},
+							.color = red,
+					},
+					pad{
+							.shape =
+									{
+											.x = (screen_width - 2 * border_thickness - border_thickness) / 2.0f + border_thickness,
+											.y = (screen_height - 2 * border_thickness - border_thickness) / 2.0f + border_thickness,
+											.w = pad_length,
+											.h = border_thickness,
+									},
+							.color = blue,
+					} {}
 
 		friend App* create();
 
