@@ -109,19 +109,24 @@ export {
 
 	private:
 		explicit App(SDL_Window* window, SDL_Renderer* renderer)
-				: window{window}, renderer(renderer), border_top{.shape = {.x = 0, .y = 0, .w = screen_width, .h = border_thickness}, .color = red},
-					border_bottom{.shape = {.x = 0, .y = screen_height - border_thickness, .w = screen_width, .h = border_thickness}, .color = red},
+				: window{window},
+					renderer(renderer),
 					border_left{.shape = {.x = 0, .y = 0, .w = border_thickness, .h = screen_height}, .color = red},
-					border_right{.shape = {.x = screen_width - border_thickness, .y = 0, .w = border_thickness, .h = screen_height}, .color = red} {
-			pad = {.shape = {.x = (screen_width - 2 * border_thickness - border_thickness) / 2.0f + border_thickness,
-											 .y = (screen_height - 2 * border_thickness - border_thickness) / 2.0f + border_thickness,
-											 .w = border_thickness,
-											 .h = border_thickness},
-						 .color = blue};
-		}
+					border_right{.shape = {.x = screen_width - border_thickness, .y = 0, .w = border_thickness, .h = screen_height}, .color = red},
+					border_top{.shape = {.x = 0, .y = 0, .w = screen_width, .h = border_thickness}, .color = red},
+					border_bottom{.shape = {.x = 0, .y = screen_height - border_thickness, .w = screen_width, .h = border_thickness}, .color = red},
+					pad{.shape = {.x = (screen_width - 2 * border_thickness - border_thickness) / 2.0f + border_thickness,
+												.y = (screen_height - 2 * border_thickness - border_thickness) / 2.0f + border_thickness,
+												.w = border_thickness,
+												.h = border_thickness},
+							.color = blue} {}
+
 		friend App* create();
 
 	private:
+		SDL_Window* window = nullptr;
+		SDL_Renderer* renderer = nullptr;
+
 		static constexpr int screen_width = 800;
 		static constexpr int screen_height = 600;
 		static constexpr SDL_WindowFlags screen_flags = 0;
@@ -132,8 +137,6 @@ export {
 		const RectangleShape border_top;
 		const RectangleShape border_bottom;
 
-		SDL_Window* window = nullptr;
-		SDL_Renderer* renderer = nullptr;
 		bool paused = false;
 
 		RectangleShape pad;
