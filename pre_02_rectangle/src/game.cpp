@@ -53,7 +53,7 @@ export {
 			SDL_Window* window = nullptr;
 			SDL_Renderer* renderer = nullptr;
 
-			if (SDL_CreateWindowAndRenderer("Hello SDL callbacks", App::screen_width, App::screen_height, App::screen_flags, &window, &renderer) == false) {
+			if (SDL_CreateWindowAndRenderer("Hello SDL Rects", App::screen_width, App::screen_height, App::screen_flags, &window, &renderer) == false) {
 				std::println("Unable to create the window or the renderer: {}", SDL_GetError());
 				return nullptr;
 			}
