@@ -25,7 +25,9 @@ class SimulaionRecipe(ConanFile):
             )
 
     def requirements(self):
-        self.requires("sdl/3.2.0")
+        self.requires("sdl/3.2.2")
+        self.requires("entt/3.14.0")
+        self.requires("glm/1.0.1")
 
     def layout(self):
         cmake_layout(self)
