@@ -19,15 +19,16 @@ class SimulaionRecipe(ConanFile):
 
     # Sources are located in the same place as this recipe, copy them to the recipe
     exports_sources = (
-            "CMakeLists.txt",
-            "pre_01_callbacks/src/*",
-            "pre_01_callbacks/CMakeLists.txt",
-            )
+        "CMakeLists.txt",
+        "pre_01_callbacks/src/*",
+        "pre_01_callbacks/CMakeLists.txt",
+    )
 
     def requirements(self):
         self.requires("sdl/3.2.2")
         self.requires("entt/3.14.0")
         self.requires("glm/1.0.1")
+        self.requires("box2d/3.0.0")
 
     def layout(self):
         cmake_layout(self)
