@@ -23,40 +23,7 @@ export {
 
 	constexpr int SCREEN_HEIGHT = 600;
 	constexpr std::ratio<4, 3> ASPECT_RATIO;
-	constexpr int SCREEN_WIDTH = SCREEN_HEIGHT * ASPECT_RATIO.num / ASPECT_RATIO.den;
-
-	struct Triangle {
-		Triangle() : vbo{GL_ARRAY_BUFFER} {
-			vao.bind();
-			vbo.bind();
-
-			float half_size = 0.5f;
-
-			std::array<glm::vec2, 3> vertices = {
-					glm::vec2{-half_size, -half_size},
-					glm::vec2{+half_size, -half_size},
-					glm::vec2{0.0f, +half_size},
-			};
-
-			vbo.data(sizeof(vertices), vertices.data(), GL_STATIC_DRAW);
-		}
-
-		void draw() {
-			vbo.bind();
-			glVertexAttribPointer(0, // attribute 0. No particular reason for 0, but must match the layout in the shader.
-														2, // size
-														GL_FLOAT, // type
-														GL_FALSE, // normalized?
-														0,				// stride
-														nullptr); // array buffer offset
-
-			glDrawArrays(GL_TRIANGLES, 0, 3);
-		}
-
-	private:
-		vis::VertexArrayObject vao{};
-		vis::VertexBufferObject vbo;
-	};
+	constexpr int SCREEN_WIDTH = 800; // SCREEN_HEIGHT * ASPECT_RATIO.num / ASPECT_RATIO.den;
 
 	class App {
 	public:
@@ -160,38 +127,36 @@ export {
 			const auto dt = current_time - time_start;
 			time_start = current_time;
 
-			glEnableVertexAttribArray(0);
 			glClear(GL_COLOR_BUFFER_BIT);
 
-			program->use();
-
-			triangle.draw();
+			shape->draw(*program);
 
 			SDL_GL_SwapWindow(window);
-
-			glDisableVertexAttribArray(0);
 
 			return SDL_AppResult::SDL_APP_CONTINUE;
 		}
 
 	private:
 		explicit App(SDL_Window* window, SDL_GLContext opengl_context)
-				: window{window}, opengl_context(opengl_context), time_start{App::now()}, program{std::nullopt} {
+				: window{window}, opengl_context(opengl_context), time_start{App::now()}, program{std::nullopt}, shape{} {
 			initialize_video();
+
+			//			shape = vis::create_rectangle_shape(glm::vec2{}, glm::vec2{0.5f, 0.5f});
+			shape = vis::create_regular_shape(glm::vec2{}, 0.5f, glm::vec4{}, 50);
 		}
 
 		void initialize_video() {
 			glViewport(0, 0, screen_width, screen_height);
-			glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+			glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
 
 			program = vis::ProgramBuilder{}
 										.add_shader(vis::Shader::create(GL_VERTEX_SHADER, R"(
 #version 330 core
-layout (location = 0) in vec2 aPos;
+layout (location = 0) in vec2 pos;
 
 void main()
 {
-    gl_Position = vec4(aPos.x, aPos.y, 0.0f, 1.0);
+    gl_Position = vec4(pos.x, pos.y, 0.0f, 1.0);
 }
 )"))
 										.add_shader(vis::Shader::create(GL_FRAGMENT_SHADER, R"(
@@ -225,7 +190,7 @@ void main()
 
 		float time_start;
 		std::optional<vis::Program> program{};
-		Triangle triangle;
+		std::optional<vis::GeometryShape> shape;
 	};
 
 	} // namespace Game
