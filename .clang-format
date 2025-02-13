@@ -7,10 +7,10 @@
 
 
 # Common settings
-BasedOnStyle:  LLVM
-TabWidth:        2
-IndentWidth:     2
-UseTab:          Always
+BasedOnStyle: LLVM
+TabWidth: 2
+IndentWidth: 2
+UseTab: Always
 ColumnLimit: 120
 
 # Other languages JavaScript, Proto
@@ -22,3 +22,4 @@ CompactNamespaces: true
 NamespaceIndentation: None
 FixNamespaceComments: true
 PackConstructorInitializers: NextLine
+AllowShortFunctionsOnASingleLine: Empty
