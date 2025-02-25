@@ -4,12 +4,29 @@ module;
 
 #include <SDL3/SDL.h>
 
-#include <numbers>
 #include <optional>
 #include <print>
 #include <string>
 #include <string_view>
 #include <vector>
+
+#ifndef NDEBUG
+#include <cassert>
+#include <print>
+#endif
+
+#ifdef NDEBUG
+#define CHECK_LAST_GL_CALL
+#else
+#define CHECK_LAST_GL_CALL                                                                                             \
+	do {                                                                                                                 \
+		auto err = glGetError();                                                                                           \
+		if (err) {                                                                                                         \
+			std::println("[{}][{}:{}] An OpenGL Error occured", __FILE__, __func__, __LINE__);                               \
+			assert(err);                                                                                                     \
+		}                                                                                                                  \
+	} while (false)
+#endif
 
 export module vis:opengl;
 
@@ -17,296 +34,324 @@ import :math;
 
 export namespace vis::opengl {
 
-    struct VertexArrayObject {
-        VertexArrayObject() {
-            glGenVertexArrays(1, &id);
-        }
+struct VertexArrayObject {
+	VertexArrayObject() {
+		glGenVertexArrays(1, &id);
+	}
 
-        ~VertexArrayObject() {
-            if (id != 0)
-                glDeleteVertexArrays(1, &id);
-        }
+	~VertexArrayObject() {
+		if (id != 0)
+			glDeleteVertexArrays(1, &id);
+	}
 
-        VertexArrayObject(VertexArrayObject &) = delete;
+	VertexArrayObject(VertexArrayObject&) = delete;
 
-        VertexArrayObject &operator=(VertexArrayObject &) = delete;
+	VertexArrayObject& operator=(VertexArrayObject&) = delete;
 
-        VertexArrayObject(VertexArrayObject &&rhs) {
-            std::swap(id, rhs.id);
-        }
+	VertexArrayObject(VertexArrayObject&& rhs) noexcept : id{rhs.id} {
+		rhs.id = 0;
+	}
 
-        VertexArrayObject &operator=(VertexArrayObject &&rhs) {
-            std::swap(id, rhs.id);
-            return *this;
-        }
+	VertexArrayObject& operator=(VertexArrayObject&& rhs) noexcept {
+		id = rhs.id;
+		rhs.id = 0;
+		return *this;
+	}
 
-        void bind() const {
-            glBindVertexArray(id);
-        }
+	void bind() const {
+		glBindVertexArray(id);
+	}
 
-        static void unbind() {
-            glBindVertexArray(0);
-        }
+	static void unbind() {
+		glBindVertexArray(0);
+	}
 
-        explicit operator GLuint() const {
-            return id;
-        }
+	explicit operator GLuint() const {
+		return id;
+	}
 
-        GLuint id{};
-    };
+	GLuint id{};
+};
 
-    struct VertexBufferObject {
-        explicit VertexBufferObject(GLenum type) : type{type} {
-            glGenBuffers(1, &id);
-        }
+struct VertexBufferObject {
+	explicit VertexBufferObject(GLenum type) : type{type} {
+		glGenBuffers(1, &id);
+	}
 
-        ~VertexBufferObject() {
-            if (id != 0)
-                glDeleteBuffers(1, &id);
-        }
+	~VertexBufferObject() {
+		if (id != 0)
+			glDeleteBuffers(1, &id);
+	}
 
-        VertexBufferObject(VertexBufferObject &) = delete;
+	VertexBufferObject(VertexBufferObject&) = delete;
 
-        VertexBufferObject &operator=(VertexBufferObject &) = delete;
+	VertexBufferObject& operator=(VertexBufferObject&) = delete;
 
-        VertexBufferObject(VertexBufferObject &&rhs) {
-            std::swap(id, rhs.id);
-        }
+	VertexBufferObject(VertexBufferObject&& rhs) noexcept : id{rhs.id} {
+		rhs.id = 0;
+	}
 
-        VertexBufferObject &operator=(VertexBufferObject &&rhs) {
-            std::swap(id, rhs.id);
-            return *this;
-        }
+	VertexBufferObject& operator=(VertexBufferObject&& rhs) noexcept {
+		id = rhs.id;
+		rhs.id = 0;
+		return *this;
+	}
 
-        void bind() const {
-            glBindBuffer(type, id);
-        }
+	void bind() const {
+		glBindBuffer(type, id);
+		CHECK_LAST_GL_CALL;
+	}
 
-        void unbind() const {
-            glBindBuffer(type, 0);
-        }
+	void unbind() const {
+		glBindBuffer(type, 0);
+		CHECK_LAST_GL_CALL;
+	}
 
-        template<typename ConstRandomIterator>
-        void data(ConstRandomIterator begin, ConstRandomIterator end, GLenum usage) {
-            using value_type = typename std::iterator_traits<ConstRandomIterator>::value_type;
+	template <typename ConstRandomIterator> void data(ConstRandomIterator begin, ConstRandomIterator end, GLenum usage) {
+		using value_type = typename std::iterator_traits<ConstRandomIterator>::value_type;
 
-            constexpr auto value_type_size = sizeof(value_type);
-            const auto element_count = std::distance(begin, end);
-            const auto total_size_in_bytes = element_count * value_type_size;
+		constexpr auto value_type_size = sizeof(value_type);
+		const auto element_count = std::distance(begin, end);
+		const auto total_size_in_bytes = element_count * value_type_size;
 
-            std::println("elements: {}, element size: {}, total size: {}", element_count, value_type_size,
-                         total_size_in_bytes);
+		std::println("elements: {}, element size: {}, total size: {}", element_count, value_type_size, total_size_in_bytes);
 
-            data(total_size_in_bytes, &(*begin), usage);
-        }
+		data(total_size_in_bytes, &(*begin), usage);
+	}
 
-        void data(std::size_t size, const void *data, GLenum usage) const {
-            glBufferData(type, static_cast<GLsizei>(size), data, usage);
-        }
+	void data(std::size_t size, const void* data, GLenum usage) const {
+		glBufferData(type, static_cast<GLsizei>(size), data, usage);
+		CHECK_LAST_GL_CALL;
+	}
 
-        explicit operator GLuint() const {
-            return id;
-        }
+	explicit operator GLuint() const {
+		return id;
+	}
 
-        GLenum type{GL_VERTEX_ARRAY};
-        GLuint id{};
-    };
+	GLenum type{GL_VERTEX_ARRAY};
+	GLuint id{};
+};
 
-    enum class ShaderType {
-        vertex,
-        geometry,
-        tesselation_evaluation,
-        tesselation_control,
-        compute,
-        fragment,
-    };
+enum class ShaderType {
+	vertex,
+	geometry,
+	tesselation_evaluation,
+	tesselation_control,
+	compute,
+	fragment,
+};
 
-    GLenum to_opengl(ShaderType type) {
-        switch (type) {
-            case ShaderType::vertex:
-                return GL_VERTEX_SHADER;
-            case ShaderType::geometry:
-                return GL_GEOMETRY_SHADER;
-            case ShaderType::tesselation_evaluation:
-                return GL_TESS_EVALUATION_SHADER;
-            case ShaderType::tesselation_control:
-                return GL_TESS_CONTROL_SHADER;
-            case ShaderType::compute:
-                return GL_COMPUTE_SHADER;
-            case ShaderType::fragment:
-                return GL_FRAGMENT_SHADER;
+GLenum to_opengl(ShaderType type) {
+	switch (type) {
+	case ShaderType::vertex:
+		return GL_VERTEX_SHADER;
+	case ShaderType::geometry:
+		return GL_GEOMETRY_SHADER;
+	case ShaderType::tesselation_evaluation:
+		return GL_TESS_EVALUATION_SHADER;
+	case ShaderType::tesselation_control:
+		return GL_TESS_CONTROL_SHADER;
+	case ShaderType::compute:
+		return GL_COMPUTE_SHADER;
+	case ShaderType::fragment:
+		return GL_FRAGMENT_SHADER;
 
-            default:
-                std::unreachable();
-        }
-    }
+	default:
+		std::unreachable();
+	}
+}
 
-    class Shader {
-    public:
-        static Shader create(ShaderType type, std::string_view source) {
-            return Shader{to_opengl(type), source};
-        }
+class Shader {
+public:
+	static Shader create(ShaderType type, std::string_view source) {
+		return Shader{to_opengl(type), source};
+	}
 
-        Shader(const Shader &) = delete;
+	Shader(const Shader&) = delete;
 
-        Shader &operator=(const Shader &) = delete;
+	Shader& operator=(const Shader&) = delete;
 
-        Shader(Shader &&other) noexcept: type{other.type}, id{other.id} {
-            other.type = GL_INVALID_ENUM;
-        }
+	Shader(Shader&& other) noexcept : type{other.type}, id{other.id} {
+		other.type = GL_INVALID_ENUM;
+	}
 
-        Shader &operator=(Shader &&rhs) {
-            std::swap(type, rhs.type);
-            std::swap(id, rhs.id);
-            return *this;
-        }
+	Shader& operator=(Shader&& rhs) {
+		std::swap(type, rhs.type);
+		std::swap(id, rhs.id);
+		return *this;
+	}
 
-        ~Shader() {
-            if (type != GL_INVALID_ENUM)
-                glDeleteShader(id);
-        }
+	~Shader() {
+		if (type != GL_INVALID_ENUM)
+			glDeleteShader(id);
+		CHECK_LAST_GL_CALL;
+	}
 
-        explicit operator GLuint() const {
-            return id;
-        }
+	explicit operator GLuint() const {
+		return id;
+	}
 
-    private:
-        explicit Shader(GLenum type, std::string_view source) : type{type}, id{glCreateShader(type)} {
-            char const *source_pointer = source.data();
-            glShaderSource(id, 1, &(source_pointer), nullptr);
-            glCompileShader(id);
+private:
+	explicit Shader(GLenum type, std::string_view source) : type{type}, id{glCreateShader(type)} {
+		char const* source_pointer = source.data();
+		glShaderSource(id, 1, &(source_pointer), nullptr);
+		CHECK_LAST_GL_CALL;
 
-            // Check Vertex Shader
-            GLint res = GL_FALSE;
-            GLint info_log_len = 0;
-            glGetShaderiv(id, GL_COMPILE_STATUS, &res);
-            glGetShaderiv(id, GL_INFO_LOG_LENGTH, &info_log_len);
-            if (info_log_len > 0) {
-                std::string message;
-                message.resize(info_log_len + 1, '\0');
-                glGetShaderInfoLog(id, info_log_len, nullptr, message.data());
-                std::println("Shader compilation error: {}", message);
-            };
-        }
+		glCompileShader(id);
+		CHECK_LAST_GL_CALL;
 
-    private:
-        GLenum type;
-        GLuint id;
-    };
+		// Check Vertex Shader
+		GLint res = GL_FALSE;
+		GLint info_log_len = 0;
+		glGetShaderiv(id, GL_COMPILE_STATUS, &res);
+		CHECK_LAST_GL_CALL;
 
-    class Program {
-    public:
-        static std::optional<Program> create(std::vector<Shader> shaders) {
-            return Program{std::move(shaders)};
-        }
+		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &info_log_len);
+		CHECK_LAST_GL_CALL;
 
-        Program(const Program &) = delete;
+		if (info_log_len > 0) {
+			std::string message;
+			message.resize(info_log_len + 1, '\0');
+			glGetShaderInfoLog(id, info_log_len, nullptr, message.data());
+			CHECK_LAST_GL_CALL;
 
-        Program &operator=(const Program &) = delete;
+			std::println("Shader compilation error: {}", message);
+		};
+	}
 
-        Program(Program &&other) noexcept: id{other.id} {
-            other.id = 0;
-        }
+private:
+	GLenum type;
+	GLuint id;
+};
 
-        Program &operator=(Program &&rhs) noexcept {
-            std::swap(id, rhs.id);
-            return *this;
-        }
+class Program {
+public:
+	static std::optional<Program> create(std::vector<Shader> shaders) {
+		return Program{std::move(shaders)};
+	}
 
-        ~Program() {
-            if (id != 0)
-                glDeleteShader(id);
-        }
+	Program(const Program&) = delete;
 
-        explicit operator GLuint() const {
-            return id;
-        }
+	Program& operator=(const Program&) = delete;
 
-        void use() const {
-            glUseProgram(id);
-        }
+	Program(Program&& other) noexcept : id{other.id} {
+		other.id = 0;
+	}
 
-        static void unbind() {
-            glUseProgram(0);
-        }
+	Program& operator=(Program&& rhs) noexcept {
+		std::swap(id, rhs.id);
+		return *this;
+	}
 
-    private:
-        explicit Program(std::vector<Shader> &&shaders) : id{glCreateProgram()} {
-            for (const auto &shader: shaders) {
-                glAttachShader(id, static_cast<GLuint>(shader));
-            }
+	~Program() {
+		if (id != 0) {
+			glDeleteShader(id);
+			CHECK_LAST_GL_CALL;
+		}
+	}
 
-            glLinkProgram(id);
+	explicit operator GLuint() const {
+		return id;
+	}
 
-            GLint result = GL_FALSE;
-            GLint info_log_len = 0;
+	void use() const {
+		glUseProgram(id);
+	}
 
-            glGetProgramiv(id, GL_LINK_STATUS, &result);
-            glGetProgramiv(id, GL_INFO_LOG_LENGTH, &info_log_len);
-            if (info_log_len > 0) {
-                std::string message;
-                message.resize(info_log_len + 1, '\0');
-                glGetProgramInfoLog(id, info_log_len, nullptr, message.data());
-                std::println("Link error: {}", message);
-            }
-        }
+	static void unbind() {
+		glUseProgram(0);
+		CHECK_LAST_GL_CALL;
+	}
 
-    private:
-        GLuint id;
-    };
+private:
+	explicit Program(std::vector<Shader>&& shaders) : id{glCreateProgram()} {
+		for (const auto& shader : shaders) {
+			glAttachShader(id, static_cast<GLuint>(shader));
+			CHECK_LAST_GL_CALL;
+		}
 
-    class ProgramBuilder {
-    public:
-        ProgramBuilder &add_shader(Shader &&shader) {
-            shaders.emplace_back(std::move(shader));
-            return *this;
-        }
+		glLinkProgram(id);
+		CHECK_LAST_GL_CALL;
 
-        [[nodiscard]] std::optional<Program> build() {
-            return Program::create(std::move(shaders));
-        }
+		GLint result = GL_FALSE;
+		GLint info_log_len = 0;
 
-    private:
-        std::vector<Shader> shaders;
-    };
+		glGetProgramiv(id, GL_LINK_STATUS, &result);
+		CHECK_LAST_GL_CALL;
 
-    struct DrawDescription {
-        GLenum mode;
-        GLint first;
-        GLsizei vertex_count;
-    };
+		glGetProgramiv(id, GL_INFO_LOG_LENGTH, &info_log_len);
+		CHECK_LAST_GL_CALL;
 
-    void renderer_init() {
-        auto glewStatus = glewInit();
-        if (glewStatus != GLEW_OK) {
-            throw std::runtime_error("Unable to initialize OpenGL");
-        }
-    }
+		if (info_log_len > 0) {
+			std::string message;
+			message.resize(info_log_len + 1, '\0');
 
-    void renderer_set_clear_color(const vis::vec4 &color) {
-        glClearColor(color.r, color.g, color.b, color.a);
-    }
+			glGetProgramInfoLog(id, info_log_len, nullptr, message.data());
+			CHECK_LAST_GL_CALL;
 
-    void renderer_clear() {
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
+			std::println("Link error: {}", message);
+		}
+	}
 
-    void renderer_render(SDL_Window *window) {
-        SDL_GL_SwapWindow(window);
-    }
+private:
+	GLuint id;
+};
 
-    void renderer_set_viewport(int x, int y, int width, int height) {
-        glViewport(x, y, width, height);
-    }
+class ProgramBuilder {
+public:
+	ProgramBuilder& add_shader(Shader&& shader) {
+		shaders.emplace_back(std::move(shader));
+		return *this;
+	}
 
-    std::string renderer_print_info() {
-        auto renderer = (const char *) glGetString(GL_RENDERER);
-        auto version = (const char *) glGetString(GL_VERSION);
+	[[nodiscard]] std::optional<Program> build() {
+		return Program::create(std::move(shaders));
+	}
 
-        return std::format("viz engine version 0.1\n"
-                           "Renderer {}\n"
-                           "OpenGL version supported {}",
-                           renderer, version);
-    }
+private:
+	std::vector<Shader> shaders;
+};
+
+struct DrawDescription {
+	GLenum mode;
+	GLint first;
+	GLsizei vertex_count;
+};
+
+void renderer_init() {
+	auto glewStatus = glewInit();
+	if (glewStatus != GLEW_OK) {
+		throw std::runtime_error("Unable to initialize OpenGL");
+	}
+}
+
+void renderer_set_clear_color(const vis::vec4& color) {
+	glClearColor(color.r, color.g, color.b, color.a);
+	CHECK_LAST_GL_CALL;
+}
+
+void renderer_clear() {
+	glClear(GL_COLOR_BUFFER_BIT);
+	CHECK_LAST_GL_CALL;
+}
+
+void renderer_render(SDL_Window* window) {
+	SDL_GL_SwapWindow(window);
+}
+
+void renderer_set_viewport(int x, int y, int width, int height) {
+	glViewport(x, y, width, height);
+	CHECK_LAST_GL_CALL;
+}
+
+std::string renderer_print_info() {
+	auto renderer = (const char*)glGetString(GL_RENDERER);
+	auto version = (const char*)glGetString(GL_VERSION);
+
+	return std::format("viz engine version 0.1\n"
+										 "Renderer {}\n"
+										 "OpenGL version supported {}",
+										 renderer, version);
+}
 
 } // namespace vis::opengl
