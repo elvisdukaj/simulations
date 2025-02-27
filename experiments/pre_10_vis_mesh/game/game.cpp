@@ -7,6 +7,7 @@ module;
 #include <print>
 #include <ratio>
 #include <stdexcept>
+#include <optional>
 
 export module Game;
 
