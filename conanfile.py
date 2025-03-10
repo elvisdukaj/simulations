@@ -25,7 +25,7 @@ class SimulaionRecipe(ConanFile):
     )
 
     def requirements(self):
-        self.requires("sdl/3.2.2")
+        self.requires("sdl/3.2.6")
         self.requires("entt/3.14.0")
         self.requires("glm/1.0.1")
         self.requires("box2d/3.0.0")
