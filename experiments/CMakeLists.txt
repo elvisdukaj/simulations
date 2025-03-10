@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.28 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.31.6 FATAL_ERROR)
 project(SIMULATION CXX)
 
 if (BUILD_PRE_EXAMPLES)
@@ -11,5 +11,6 @@ if (BUILD_PRE_EXAMPLES)
     #    add_subdirectory(pre_07_hello_opengl)
     #    add_subdirectory(pre_08_hello_vis)
     #    add_subdirectory(pre_09_hello_vis)
-    add_subdirectory(pre_10_vis_mesh)
+    #    add_subdirectory(pre_10_vis_mesh)
+    add_subdirectory(pre_11_vis)
 endif ()

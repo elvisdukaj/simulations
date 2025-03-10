@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.28 FATAL_ERROR)
 project(SIMULATION CXX)
 
+set(CMAKE_CXX_MODULE_STD 1)
+
 option(BUILD_PRE_EXAMPLES "Build the pre examples" ON)
 
 find_package(SDL3 CONFIG REQUIRED)
