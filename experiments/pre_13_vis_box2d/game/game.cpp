@@ -168,14 +168,13 @@ void main()
 		}
 
 		void update_physic_system(float t, float dt) {
-			std::println("t = {}, dt = {}", t, dt);
 			static float accumulated_time = 0.0f;
 			static constexpr float fixed_time_step = 1 / 30.0f;
 
 			accumulated_time += dt;
 
 			while (accumulated_time >= fixed_time_step) {
-				vis::physics::b2World_Step(world, fixed_time_step, 4);
+				world->step(fixed_time_step, 4);
 				accumulated_time -= fixed_time_step;
 			}
 
@@ -183,14 +182,13 @@ void main()
 			view.each([&](auto& tr, const auto& body) {
 				auto b2tr = vis::physics::b2Body_GetTransform(body);
 				tr.position = vis::vec2{b2tr.p.x, b2tr.p.y};
-				std::println("body {}, pos: {{{}.{}}}", body.index1, tr.position.x, tr.position.y);
 			});
 		}
 
 		void initialize_physics() {
-			auto world_def = vis::physics::b2DefaultWorldDef();
-			world_def.gravity = vis::physics::b2Vec2{0.0f, -9.81f};
-			world = vis::physics::b2CreateWorld(&world_def);
+			auto world_def = vis::physics::world_def();
+			world_def.set_gravity(vis::vec2{0.0f, -9.81f});
+			world = vis::physics::create_world(world_def);
 		}
 
 		void initialize_scene() {
@@ -224,10 +222,9 @@ void main()
 				auto body_def = vis::physics::b2DefaultBodyDef();
 				body_def.position = vis::physics::b2Vec2{transform.position.x, transform.position.y};
 				body_def.type = vis::physics::b2BodyType::b2_staticBody;
-				auto& rigid_body =
-						entity_registry.emplace<RigidBody>(left_wall, RigidBody{
-																															vis::physics::b2CreateBody(world, &body_def),
-																													});
+				auto& rigid_body = entity_registry.emplace<RigidBody>(left_wall, RigidBody{
+																																						 world->create_body(&body_def),
+																																				 });
 
 				auto wall_box = vis::physics::b2MakeBox(horizontal_half_extent.x, horizontal_half_extent.y);
 				auto wall_shape = vis::physics::b2DefaultShapeDef();
@@ -243,10 +240,9 @@ void main()
 				auto body_def = vis::physics::b2DefaultBodyDef();
 				body_def.position = vis::physics::b2Vec2{transform.position.x, transform.position.y};
 				body_def.type = vis::physics::b2BodyType::b2_staticBody;
-				auto& rigid_body =
-						entity_registry.emplace<RigidBody>(right_wall, RigidBody{
-																															 vis::physics::b2CreateBody(world, &body_def),
-																													 });
+				auto& rigid_body = entity_registry.emplace<RigidBody>(right_wall, RigidBody{
+																																							world->create_body(&body_def),
+																																					});
 
 				auto wall_box = vis::physics::b2MakeBox(horizontal_half_extent.x, horizontal_half_extent.y);
 				auto wall_shape = vis::physics::b2DefaultShapeDef();
@@ -262,10 +258,9 @@ void main()
 				auto body_def = vis::physics::b2DefaultBodyDef();
 				body_def.position = vis::physics::b2Vec2{transform.position.x, transform.position.y};
 				body_def.type = vis::physics::b2BodyType::b2_staticBody;
-				auto& rigid_body =
-						entity_registry.emplace<RigidBody>(top_wall, RigidBody{
-																														 vis::physics::b2CreateBody(world, &body_def),
-																												 });
+				auto& rigid_body = entity_registry.emplace<RigidBody>(top_wall, RigidBody{
+																																						world->create_body(&body_def),
+																																				});
 
 				auto wall_box = vis::physics::b2MakeBox(vertical_half_extent.x, vertical_half_extent.y);
 				auto wall_shape = vis::physics::b2DefaultShapeDef();
@@ -281,10 +276,9 @@ void main()
 				auto body_def = vis::physics::b2DefaultBodyDef();
 				body_def.position = vis::physics::b2Vec2{transform.position.x, transform.position.y};
 				body_def.type = vis::physics::b2BodyType::b2_staticBody;
-				auto& rigid_body =
-						entity_registry.emplace<RigidBody>(bottom_wall, RigidBody{
-																																vis::physics::b2CreateBody(world, &body_def),
-																														});
+				auto& rigid_body = entity_registry.emplace<RigidBody>(bottom_wall, RigidBody{
+																																							 world->create_body(&body_def),
+																																					 });
 
 				auto wall_box = vis::physics::b2MakeBox(vertical_half_extent.x, vertical_half_extent.y);
 				auto wall_shape = vis::physics::b2DefaultShapeDef();
@@ -306,14 +300,14 @@ void main()
 				body_def.position = vis::physics::b2Vec2{transform.position.x, transform.position.y};
 				body_def.type = vis::physics::b2BodyType::b2_dynamicBody;
 				auto& rigid_body = entity_registry.emplace<RigidBody>(ball, RigidBody{
-																																				vis::physics::b2CreateBody(world, &body_def),
+																																				world->create_body(&body_def),
 																																		});
 
 				auto shape_def = vis::physics::b2DefaultShapeDef();
-				shape_def.restitution = .5f;
+				shape_def.restitution = .75f;
 				auto shape = vis::physics::b2CreateCircleShape(rigid_body, &shape_def, &circle);
 
-				vis::physics::b2Body_ApplyForce(rigid_body, {.x = 450.0f, .y = 450.0f},
+				vis::physics::b2Body_ApplyForce(rigid_body, {.x = 4950.0f, .y = 4850.0f},
 																				vis::physics::b2Body_GetLocalCenterOfMass(rigid_body), true);
 			}
 		}
@@ -333,7 +327,7 @@ void main()
 		vis::mesh::Mesh circle;
 		vis::ScreenProjection screen_proj;
 
-		vis::physics::b2WorldId world;
+		std::optional<vis::physics::world> world;
 	};
 
 	} // namespace Game
