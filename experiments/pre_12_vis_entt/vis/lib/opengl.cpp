@@ -252,12 +252,19 @@ public:
 		glUseProgram(id);
 	}
 
-
 	void set_uniform(std::string_view name, const vis::mat3& m) {
 		// TODO: make it a concept for VectorConcept and MatrixConcept so we can write this as:
 		// template<typename T> requires IsVector<T> or IsMatrix<T>
 		const auto loc = get_or_update_uniform(name);
 		glUniformMatrix3fv(loc, 1, GL_FALSE, vis::gtc::value_ptr(m));
+		CHECK_LAST_GL_CALL;
+	}
+
+	void set_uniform(std::string_view name, const vis::mat4& m) {
+		// TODO: make it a concept for VectorConcept and MatrixConcept so we can write this as:
+		// template<typename T> requires IsVector<T> or IsMatrix<T>
+		const auto loc = get_or_update_uniform(name);
+		glUniformMatrix4fv(loc, 1, GL_FALSE, vis::gtc::value_ptr(m));
 		CHECK_LAST_GL_CALL;
 	}
 

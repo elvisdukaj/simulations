@@ -6,6 +6,7 @@ module;
 
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 export module vis:math;
 
@@ -2675,3 +2676,46 @@ export namespace std {
 using std::hash; // See GLM_GTX_hash
 }
 #endif
+
+// Operators
+using vis::operator+;
+using vis::operator-;
+using vis::operator*;
+using vis::operator/;
+using vis::operator%;
+using vis::operator^;
+using vis::operator&;
+using vis::operator|;
+using vis::operator~;
+using vis::operator<<;
+using vis::operator>>;
+using vis::operator==;
+using vis::operator!=;
+using vis::operator&&;
+using vis::operator||;
+
+export namespace vis {
+vis::mat4 orthogonal_matrix(int screen_width, int screen_height, float world_width, float world_height) {
+	const float ratio = static_cast<float>(screen_width) / static_cast<float>(screen_height);
+	float left = -world_width / 2.0f;
+	float right = world_width / 2.0f;
+	float bottom = -world_height / 2.0f;
+	float top = world_height / 2.0f;
+	const float near = -1.0f;
+	const float far = 1.0f;
+
+	if (ratio > 1.0f) { // Screen is wider than the world aspect (1:1)
+		// Adjust the world width to match the screen aspect
+		world_width = world_height * ratio;
+		left = -world_width / 2.0f;
+		right = world_width / 2.0f;
+	} else { // Screen is taller than or equal to the world aspect (1:1)
+		// Adjust the world height to match the screen aspect
+		world_height = world_width / ratio;
+		bottom = -world_height / 2.0f;
+		top = world_height / 2.0f;
+	}
+
+	return vis::ext::ortho(left, right, bottom, top, near, far);
+}
+} // namespace vis
