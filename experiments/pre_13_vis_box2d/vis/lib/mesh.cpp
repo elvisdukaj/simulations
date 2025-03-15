@@ -26,6 +26,7 @@ export namespace vis::mesh {
 
 struct Vertex {
 	vis::vec2 pos;
+	vis::vec4 color;
 };
 
 struct VertexDescription {
@@ -45,19 +46,24 @@ struct DrawDescription {
 
 class Mesh {
 public:
-	explicit Mesh(const std::vector<Vertex>& vertexes, const VertexDescription& vertex_descriptor,
+	explicit Mesh(const std::vector<Vertex>& vertexes, const std::vector<VertexDescription>& vertex_descriptors,
 								const DrawDescription& draw_descriptor)
-			: vao{}, vbo{GL_ARRAY_BUFFER}, vertex_descriptor{vertex_descriptor}, draw_descriptor{draw_descriptor} {
+			: vao{}, vbo{GL_ARRAY_BUFFER}, vertex_descriptors{vertex_descriptors}, draw_descriptor{draw_descriptor} {
 		vao.bind();
 		vbo.bind();
 
 		vbo.data(begin(vertexes), end(vertexes), GL_STATIC_DRAW);
 
-		glEnableVertexAttribArray(vertex_descriptor.index);
-		CHECK_LAST_GL_CALL;
+		for (int i = 0; i < draw_descriptor.vertex_count; i++) {
+		}
 
-		glVertexAttribPointer(vertex_descriptor.index, vertex_descriptor.size, vertex_descriptor.type,
-													vertex_descriptor.normalized, vertex_descriptor.stride, vertex_descriptor.pointer);
+		for (auto& vertex_descriptor : vertex_descriptors) {
+			glEnableVertexAttribArray(vertex_descriptor.index);
+			CHECK_LAST_GL_CALL;
+
+			glVertexAttribPointer(vertex_descriptor.index, vertex_descriptor.size, vertex_descriptor.type,
+														vertex_descriptor.normalized, vertex_descriptor.stride, vertex_descriptor.pointer);
+		}
 
 		vbo.unbind();
 		vao.unbind();
@@ -83,7 +89,7 @@ public:
 private:
 	vis::opengl::VertexArrayObject vao;
 	vis::opengl::VertexBufferObject vbo;
-	VertexDescription vertex_descriptor;
+	std::vector<VertexDescription> vertex_descriptors;
 	DrawDescription draw_descriptor;
 };
 
@@ -94,30 +100,40 @@ Mesh create_regular_shape(const vis::vec2& center, float radius, const vis::vec4
 
 	VertexVector vertexes;
 	vertexes.reserve(num_vertices + 2); // plus one for the center, and one for closing
-	vertexes.emplace_back(center);
+	vertexes.emplace_back(center, color);
 	for (int i = 0; i != num_vertices; i++) {
 		auto angle = -theta_step * static_cast<float>(i);
-		vertexes.emplace_back(vis::vec2{std::cos(angle), std::sin(angle)} * radius + center);
-	}
-	vertexes.emplace_back(vis::vec2{center.x + radius, center.y});
+		vertexes.emplace_back(vis::vec2{std::cos(angle), std::sin(angle)} * radius + center, color);
+	};
+	vertexes.emplace_back(vis::vec2{center.x + radius, center.y}, color);
 
 	auto draw_description = DrawDescription{
 			.mode = GL_TRIANGLE_FAN,
 			.first = 0,
 			.vertex_count = static_cast<GLsizei>(vertexes.size()),
 	};
-	auto vertex_description = VertexDescription{
-			.index = 0,
-			.size = 2,
-			.type = GL_FLOAT,
-			.normalized = GL_FALSE,
-			.stride = 0,
-			.pointer = nullptr,
+	auto vertex_descriptions = std::vector<VertexDescription>{
+			VertexDescription{
+					.index = 0,
+					.size = 2,
+					.type = GL_FLOAT,
+					.normalized = GL_FALSE,
+					.stride = sizeof(Vertex),
+					.pointer = nullptr,
+			},
+			VertexDescription{
+					.index = 1,
+					.size = 4,
+					.type = GL_FLOAT,
+					.normalized = GL_FALSE,
+					.stride = sizeof(Vertex),
+					.pointer = reinterpret_cast<void*>(sizeof(vis::vec2)),
+			},
 	};
-	return Mesh{vertexes, vertex_description, draw_description};
+	return Mesh{vertexes, vertex_descriptions, draw_description};
 }
 
-Mesh create_rectangle_shape(const vis::vec2& center, const vis::vec2& half_extent) {
+Mesh create_rectangle_shape(const vis::vec2& center, const vis::vec2& half_extent, vis::vec4 color = vis::vec4{}) {
 	vis::vec2 up = vis::vec2(0.0f, half_extent.y);
 	vis::vec2 down = vis::vec2(0.0f, -half_extent.y);
 	vis::vec2 left = vis::vec2(-half_extent.x, 0.0f);
@@ -125,28 +141,37 @@ Mesh create_rectangle_shape(const vis::vec2& center, const vis::vec2& half_exten
 
 	std::vector<Vertex> vertexes;
 	vertexes.reserve(6);
-	vertexes.emplace_back(center + down + left);
-	vertexes.emplace_back(center + down + right);
-	vertexes.emplace_back(center + up + right);
-	vertexes.emplace_back(center + down + left);
-	vertexes.emplace_back(center + up + right);
-	vertexes.emplace_back(center + up + left);
+	vertexes.emplace_back(center + down + left, color);
+	vertexes.emplace_back(center + down + right, color);
+	vertexes.emplace_back(center + up + right, color);
+	vertexes.emplace_back(center + down + left, color);
+	vertexes.emplace_back(center + up + right, color);
+	vertexes.emplace_back(center + up + left, color);
 
 	auto draw_description = DrawDescription{
 			.mode = GL_TRIANGLES,
 			.first = 0,
 			.vertex_count = static_cast<GLsizei>(vertexes.size()),
 	};
-	auto vertex_description = VertexDescription{
-			.index = 0,
-			.size = 2,
-			.type = GL_FLOAT,
-			.normalized = GL_FALSE,
-			.stride = 0,
-			.pointer = nullptr,
+	auto vertex_descriptions = std::vector<VertexDescription>{
+			VertexDescription{
+					.index = 0,
+					.size = 2,
+					.type = GL_FLOAT,
+					.normalized = GL_FALSE,
+					.stride = sizeof(Vertex),
+					.pointer = nullptr,
+			},
+			VertexDescription{
+					.index = 1,
+					.size = 4,
+					.type = GL_FLOAT,
+					.normalized = GL_FALSE,
+					.stride = sizeof(Vertex),
+					.pointer = reinterpret_cast<void*>(sizeof(vis::vec2)),
+			},
 	};
-
-	return Mesh{vertexes, vertex_description, draw_description};
+	return Mesh{vertexes, vertex_descriptions, draw_description};
 }
 
 } // namespace vis::mesh

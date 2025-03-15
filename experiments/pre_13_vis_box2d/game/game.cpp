@@ -123,21 +123,28 @@ export {
 										.add_shader(vis::opengl::Shader::create(vis::opengl::ShaderType::vertex, R"(
 #version 410 core
 layout (location = 0) in vec2 pos;
+layout (location = 1) in vec4 col;
 
 uniform mat4 model_view_projection;
+
+out vec4 vertex_color;
 
 void main()
 {
     gl_Position = model_view_projection * vec4(pos.xy, 0.0f, 1.0f);
+		vertex_color = col;
 }
 )"))
 										.add_shader(vis::opengl::Shader::create(vis::opengl::ShaderType::fragment, R"(
 #version 410 core
-out vec4 FragColor;
+
+in vec4 vertex_color;
+out vec4 fragment_color;
 
 void main()
 {
-    FragColor = vec4(0.0f, 0.5f, 0.2f, 1.0f);
+//    FragColor = vec4(0.0f, 0.5f, 0.2f, 1.0f);
+		fragment_color = vertex_color;
 }
 )"))
 										.build();
@@ -207,11 +214,10 @@ void main()
 			const auto ball = entity_registry.create();
 
 			constexpr auto red = vis::vec4{1.0f, 0.0f, 0.0f, 1.0f};
-			constexpr auto wall_color = red;
-
+			constexpr auto wall_color = vis::vec4{0.0f, 0.5f, 0.2f, 1.0f};
 			{
-				entity_registry.emplace<vis::mesh::Mesh>(left_wall,
-																								 vis::mesh::create_rectangle_shape(origin, horizontal_half_extent));
+				entity_registry.emplace<vis::mesh::Mesh>(
+						left_wall, vis::mesh::create_rectangle_shape(origin, horizontal_half_extent, wall_color));
 				auto& transform = entity_registry.emplace<Transformation>(left_wall, Transformation{
 																																								 .position = left_pos,
 																																						 });
@@ -229,8 +235,8 @@ void main()
 			}
 
 			{
-				entity_registry.emplace<vis::mesh::Mesh>(right_wall,
-																								 vis::mesh::create_rectangle_shape(origin, horizontal_half_extent));
+				entity_registry.emplace<vis::mesh::Mesh>(
+						right_wall, vis::mesh::create_rectangle_shape(origin, horizontal_half_extent, wall_color));
 				auto& transform = entity_registry.emplace<Transformation>(right_wall, Transformation{
 																																									.position = right_pos,
 																																							});
@@ -248,8 +254,8 @@ void main()
 			}
 
 			{
-				entity_registry.emplace<vis::mesh::Mesh>(top_wall,
-																								 vis::mesh::create_rectangle_shape(origin, vertical_half_extent));
+				entity_registry.emplace<vis::mesh::Mesh>(
+						top_wall, vis::mesh::create_rectangle_shape(origin, vertical_half_extent, wall_color));
 				auto& transform = entity_registry.emplace<Transformation>(top_wall, Transformation{
 																																								.position = top_pos,
 																																						});
@@ -267,8 +273,8 @@ void main()
 			}
 
 			{
-				entity_registry.emplace<vis::mesh::Mesh>(bottom_wall,
-																								 vis::mesh::create_rectangle_shape(origin, vertical_half_extent));
+				entity_registry.emplace<vis::mesh::Mesh>(
+						bottom_wall, vis::mesh::create_rectangle_shape(origin, vertical_half_extent, wall_color));
 				auto& transform = entity_registry.emplace<Transformation>(bottom_wall, Transformation{
 																																									 .position = bottom_pos,
 																																							 });
