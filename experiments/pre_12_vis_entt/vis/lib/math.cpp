@@ -2677,25 +2677,31 @@ using std::hash; // See GLM_GTX_hash
 }
 #endif
 
-// Operators
-using vis::operator+;
-using vis::operator-;
-using vis::operator*;
-using vis::operator/;
-using vis::operator%;
-using vis::operator^;
-using vis::operator&;
-using vis::operator|;
-using vis::operator~;
-using vis::operator<<;
-using vis::operator>>;
-using vis::operator==;
-using vis::operator!=;
-using vis::operator&&;
-using vis::operator||;
+export {
+	// Operators
+	using vis::operator+;
+	using vis::operator-;
+	using vis::operator*;
+	using vis::operator/;
+	using vis::operator%;
+	using vis::operator^;
+	using vis::operator&;
+	using vis::operator|;
+	using vis::operator~;
+	using vis::operator<<;
+	using vis::operator>>;
+	using vis::operator==;
+	using vis::operator!=;
+	using vis::operator&&;
+	using vis::operator||;
+}
 
 export namespace vis {
-vis::mat4 orthogonal_matrix(int screen_width, int screen_height, float world_width, float world_height) {
+struct ScreenProjection {
+	vis::mat4 projection;
+	vis::vec2 half_world_extent;
+};
+ScreenProjection orthogonal_matrix(int screen_width, int screen_height, float world_width, float world_height) {
 	const float ratio = static_cast<float>(screen_width) / static_cast<float>(screen_height);
 	float left = -world_width / 2.0f;
 	float right = world_width / 2.0f;
@@ -2716,6 +2722,9 @@ vis::mat4 orthogonal_matrix(int screen_width, int screen_height, float world_wid
 		top = world_height / 2.0f;
 	}
 
-	return vis::ext::ortho(left, right, bottom, top, near, far);
+	return {
+			.projection = vis::ext::ortho(left, right, bottom, top, near, far),
+			.half_world_extent = vis::vec2{world_width / 2.0f, world_height / 2.0f},
+	};
 }
 } // namespace vis

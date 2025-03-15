@@ -19,9 +19,9 @@ export {
 	};
 
 	struct Transformation {
-		vis::vec2 position{};
-		vis::vec2 scale{};
-		float angle{};
+		vis::vec2 position = vis::vec2{0.0f, 0.0f};
+		vis::vec2 scale = vis::vec2{1.0f, 1.0f};
+		float angle = 0.0f;
 	};
 
 	vis::mat4 to_mat4(const Transformation& t) {
@@ -74,7 +74,7 @@ export {
 				screen_width = event->window.data1;
 				screen_height = event->window.data2;
 				engine.set_viewport(0, 0, screen_width, screen_height);
-				projection = vis::orthogonal_matrix(screen_width, screen_height, 20.0f, 20.0f);
+				screen_proj = vis::orthogonal_matrix(screen_width, screen_height, 20.0f, 20.0f);
 			}
 
 			return SDL_AppResult::SDL_APP_CONTINUE;
@@ -109,7 +109,7 @@ export {
 			engine.print_info();
 			engine.set_clear_color(vis::vec4(1.0f, 0.5f, 0.5f, 1.0f));
 			engine.set_viewport(0, 0, screen_width, screen_height);
-			projection = vis::orthogonal_matrix(screen_width, screen_height, 20.0f, 20.0f);
+			screen_proj = vis::orthogonal_matrix(screen_width, screen_height, 20.0f, 20.0f);
 
 			// TODO: load this from file or even better, build using SPRIV during compilation time
 			program = vis::opengl::ProgramBuilder{}
@@ -139,6 +139,45 @@ void main()
 				throw std::runtime_error{"Unable to initialize the video"};
 			}
 
+			initialize_scene();
+		}
+
+		void render_system() {
+			const auto view = entity_registry.view<vis::mesh::Mesh, Transformation>();
+			program->use();
+
+			view.each([&](const auto& shape, const auto& transformation) {
+				const vis::mat4 model_view = to_mat4(transformation);
+				const auto model_view_projection = screen_proj.projection * model_view;
+				program->set_uniform("model_view_projection", model_view_projection);
+				shape.draw(*program);
+				shape.unbind();
+			});
+		}
+
+		void update_physic_system(float t) {
+			// const auto view = entity_registry.view<Transformation>();
+			// view.each([&](auto& tr) {
+			// tr.position = pos;
+			// tr.scale = scale;
+			// tr.angle = angle;
+			// });
+		}
+
+		void initialize_scene() {
+			constexpr auto wall_thickness = 0.6f;
+			constexpr auto half_wall_thickness = wall_thickness / 2.0f;
+			constexpr auto origin = vis::vec2{0.0f, 0.0f};
+			const auto half_screen_extent = screen_proj.half_world_extent;
+			constexpr auto x_offset = vis::vec2{half_wall_thickness, 0.0f};
+			constexpr auto y_offset = vis::vec2{0.0f, half_wall_thickness};
+			const auto left_pos = vis::vec2{-half_screen_extent.x, 0.0f} + x_offset;
+			const auto right_pos = vis::vec2{+half_screen_extent.x, 0.0f} - x_offset;
+			const auto top_pos = vis::vec2{0.0f, +half_screen_extent.y} - y_offset;
+			const auto bottom_pos = vis::vec2{0.0f, -half_screen_extent.y} + y_offset;
+			const auto vertical_half_extent = vis::vec2{half_screen_extent.x, half_wall_thickness};
+			const auto horizontal_half_extent = vis::vec2{half_wall_thickness, half_screen_extent.y};
+
 			const auto left_wall = entity_registry.create();
 			const auto right_wall = entity_registry.create();
 			const auto top_wall = entity_registry.create();
@@ -147,47 +186,29 @@ void main()
 			constexpr auto red = vis::vec4{1.0f, 0.0f, 0.0f, 1.0f};
 			constexpr auto wall_color = red;
 
-			entity_registry.emplace<vis::mesh::Mesh>(left_wall, vis::mesh::create_rectangle_shape(
-																															vis::vec2{
-																																	0.0f,
-																																	0.0f,
-																															},
-																															vis::vec2{
-																																	5.0f,
-																																	5.0f,
-																															}));
+			entity_registry.emplace<vis::mesh::Mesh>(left_wall,
+																							 vis::mesh::create_rectangle_shape(origin, horizontal_half_extent));
 			entity_registry.emplace<Transformation>(left_wall, Transformation{
-																														 .position = vis::vec2{0.0f, 0.0f},
-																														 .scale = vis::vec2{1.0f, 1.0f},
-																														 .angle = 0.0f,
+																														 .position = left_pos,
 																												 });
-		}
 
-		void render_system() {
-			const auto view = entity_registry.view<vis::mesh::Mesh, Transformation>();
-			program->use();
+			entity_registry.emplace<vis::mesh::Mesh>(right_wall,
+																							 vis::mesh::create_rectangle_shape(origin, horizontal_half_extent));
+			entity_registry.emplace<Transformation>(right_wall, Transformation{
+																															.position = right_pos,
+																													});
 
-			view.each([&](const auto& shape, const auto& transformation) {
-				using namespace vis;
+			entity_registry.emplace<vis::mesh::Mesh>(top_wall,
+																							 vis::mesh::create_rectangle_shape(origin, vertical_half_extent));
+			entity_registry.emplace<Transformation>(top_wall, Transformation{
+																														.position = top_pos,
+																												});
 
-				const mat4 model_view = to_mat4(transformation);
-				const auto model_view_projection = projection * model_view;
-				program->set_uniform("model_view_projection", model_view_projection);
-				shape.draw(*program);
-				shape.unbind();
-			});
-		}
-
-		void update_physic_system(float t) {
-			const float angle = t * 0.1f;
-			vis::vec2 pos{std::sin(t) * 3.0f, std::cos(t) * 3.0f};
-			vis::vec2 scale{std::sin(t) * 0.5 + 0.5f, std::cos(t) * 0.5 + 0.5f};
-			const auto view = entity_registry.view<Transformation>();
-			view.each([&](auto& tr) {
-				tr.position = pos;
-				tr.scale = scale;
-				tr.angle = angle;
-			});
+			entity_registry.emplace<vis::mesh::Mesh>(bottom_wall,
+																							 vis::mesh::create_rectangle_shape(origin, vertical_half_extent));
+			entity_registry.emplace<Transformation>(bottom_wall, Transformation{
+																															 .position = bottom_pos,
+																													 });
 		}
 
 	private:
@@ -203,7 +224,7 @@ void main()
 		std::optional<vis::opengl::Program> program{};
 		vis::registry entity_registry;
 		vis::mesh::Mesh circle;
-		vis::mat4 projection;
+		vis::ScreenProjection screen_proj;
 	};
 
 	} // namespace Game
