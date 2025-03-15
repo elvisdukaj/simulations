@@ -252,6 +252,15 @@ public:
 		glUseProgram(id);
 	}
 
+
+	void set_uniform(std::string_view name, const vis::mat3& m) {
+		// TODO: make it a concept for VectorConcept and MatrixConcept so we can write this as:
+		// template<typename T> requires IsVector<T> or IsMatrix<T>
+		const auto loc = get_or_update_uniform(name);
+		glUniformMatrix3fv(loc, 1, GL_FALSE, vis::gtc::value_ptr(m));
+		CHECK_LAST_GL_CALL;
+	}
+
 	static void unbind() {
 		glUseProgram(0);
 		CHECK_LAST_GL_CALL;
@@ -287,8 +296,25 @@ private:
 		}
 	}
 
+	GLint get_uniform_id(std::string_view name) const {
+		auto res = glGetUniformLocation(id, name.data());
+		CHECK_LAST_GL_CALL;
+
+		return res;
+	}
+
+	GLint get_or_update_uniform(std::string_view name) {
+		auto it = uniforms.find(name);
+		if (it != uniforms.end()) {
+			return it->second;
+		}
+
+		return uniforms[name] = get_uniform_id(name);
+	}
+
 private:
 	GLuint id;
+	std::map<std::string_view, GLint> uniforms;
 };
 
 class ProgramBuilder {

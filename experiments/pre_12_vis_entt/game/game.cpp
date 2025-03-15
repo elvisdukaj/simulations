@@ -14,9 +14,21 @@ export {
 
 	struct Mesh : vis::mesh::Mesh {};
 
-	struct Position : public vis::vec2 {
+	struct Position : vis::vec2 {
 		using vis::vec2::vec2;
 	};
+
+	struct Transformation {
+		vis::vec2 position{};
+		vis::vec2 scale{};
+		float angle{};
+	};
+
+	vis::mat3 to_mat3(const Transformation& t) {
+		const auto c = std::cos(t.angle);
+		const auto s = std::sin(t.angle);
+		return {c, -s, t.position.x, s, c, t.position.y, 0.0f, 0.0f, 1.0f};
+	}
 
 	constexpr int SCREEN_HEIGHT = 600;
 	constexpr std::ratio<4, 3> ASPECT_RATIO;
@@ -99,9 +111,12 @@ export {
 #version 410 core
 layout (location = 0) in vec2 pos;
 
+uniform mat3 model_view_proj_transform;
+
 void main()
 {
-    gl_Position = vec4(pos.x, pos.y, 0.0f, 1.0);
+		vec3 hom_pos = vec3(pos.xy, 1.0f) * model_view_proj_transform;
+    gl_Position = vec4(hom_pos.xy, 0.0f, 1.0f);
 }
 )"))
 										.add_shader(vis::opengl::Shader::create(vis::opengl::ShaderType::fragment, R"(
@@ -132,14 +147,30 @@ void main()
 
 			entity_registry.emplace<vis::mesh::Mesh>(
 					left_wall, vis::mesh::create_rectangle_shape(vis::vec2{0.0f, 0.0f}, vis::vec2{0.4f, 0.5f}));
-			entity_registry.emplace<Position>(left_wall, Position{0.0f, 0.0f});
+			entity_registry.emplace<Transformation>(left_wall, Transformation{
+																														 .position = vis::vec2{0.0f, 0.0f},
+																														 .scale = vis::vec2{0.4f, 0.5f},
+																														 .angle = 0.0f,
+																												 });
 		}
 
 		void render_system() {
-			const auto view = entity_registry.view<vis::mesh::Mesh, Position>();
-			view.each([&](auto& shape, auto& position) {
+			const auto view = entity_registry.view<vis::mesh::Mesh, Transformation>();
+			view.each([&](auto& shape, const auto& transformation) {
 				program->use();
+				// auto view = to_mat3(transformation);
+				vis::mat3 model_view_transform{1.0f};
+				program->set_uniform("model_view_proj_transform", model_view_transform);
 				shape.draw(*program);
+				shape.unbind();
+			});
+		}
+
+		void update_physic_system() {
+			const auto view = entity_registry.view<vis::mesh::Mesh, Transformation>();
+			view.each([&](auto& shape, auto& tr) {
+				program->use();
+
 				shape.unbind();
 			});
 		}
