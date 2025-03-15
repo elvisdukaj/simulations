@@ -182,6 +182,7 @@ void main()
 			const auto right_wall = entity_registry.create();
 			const auto top_wall = entity_registry.create();
 			const auto bottom_wall = entity_registry.create();
+			const auto ball = entity_registry.create();
 
 			constexpr auto red = vis::vec4{1.0f, 0.0f, 0.0f, 1.0f};
 			constexpr auto wall_color = red;
@@ -209,6 +210,11 @@ void main()
 			entity_registry.emplace<Transformation>(bottom_wall, Transformation{
 																															 .position = bottom_pos,
 																													 });
+
+			entity_registry.emplace<vis::mesh::Mesh>(ball, vis::mesh::create_regular_shape(origin, 1.0f, red, 20));
+			entity_registry.emplace<Transformation>(ball, Transformation{
+																												.position = origin,
+																										});
 		}
 
 	private:
