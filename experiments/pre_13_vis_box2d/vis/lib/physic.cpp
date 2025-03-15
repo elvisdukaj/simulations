@@ -20,11 +20,14 @@ using ::b2WorldDef;
 using ::b2WorldId;
 
 // functions
+using ::b2Body_ApplyForce;
 using ::b2Body_GetLinearVelocity;
+using ::b2Body_GetLocalCenterOfMass;
 using ::b2Body_GetMass;
 using ::b2Body_GetPosition;
 using ::b2Body_GetRotation;
 using ::b2Body_GetTransform;
+using ::b2Body_GetWorldCenterOfMass;
 using ::b2CreateBody;
 using ::b2CreateCircleShape;
 using ::b2CreatePolygonShape;

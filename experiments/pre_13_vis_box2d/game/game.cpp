@@ -302,15 +302,19 @@ void main()
 						.radius = radius,
 				};
 				auto body_def = vis::physics::b2DefaultBodyDef();
+				body_def.isBullet = true;
 				body_def.position = vis::physics::b2Vec2{transform.position.x, transform.position.y};
 				body_def.type = vis::physics::b2BodyType::b2_dynamicBody;
 				auto& rigid_body = entity_registry.emplace<RigidBody>(ball, RigidBody{
 																																				vis::physics::b2CreateBody(world, &body_def),
 																																		});
 
-				auto wall_shape = vis::physics::b2DefaultShapeDef();
-				wall_shape.restitution = .9f;
-				auto shape = vis::physics::b2CreateCircleShape(rigid_body, &wall_shape, &circle);
+				auto shape_def = vis::physics::b2DefaultShapeDef();
+				shape_def.restitution = .5f;
+				auto shape = vis::physics::b2CreateCircleShape(rigid_body, &shape_def, &circle);
+
+				vis::physics::b2Body_ApplyForce(rigid_body, {.x = 450.0f, .y = 450.0f},
+																				vis::physics::b2Body_GetLocalCenterOfMass(rigid_body), true);
 			}
 		}
 
