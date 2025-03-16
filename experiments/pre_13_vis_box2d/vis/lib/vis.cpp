@@ -1,7 +1,7 @@
 export module vis;
 
 export import :math;
-export import :entt;
+export import :ecs;
 export import :engine;
 export import :opengl;
 export import :mesh;

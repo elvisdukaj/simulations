@@ -2701,6 +2701,7 @@ struct ScreenProjection {
 	vis::mat4 projection;
 	vis::vec2 half_world_extent;
 };
+
 ScreenProjection orthogonal_matrix(int screen_width, int screen_height, float world_width, float world_height) {
 	const float ratio = static_cast<float>(screen_width) / static_cast<float>(screen_height);
 	float left = -world_width / 2.0f;

@@ -13,22 +13,7 @@ import vis;
 export {
 	namespace Game {
 
-	struct Mesh : vis::mesh::Mesh {};
-
-	// struct Transformation {
-	// 	vis::mat4 model;
-	// };
-
-	// struct RigidBody : vis::physics::b2BodyId {};
-	// struct RigidBody : vis::physics::RigidBodyDef {};
-
-	// vis::mat4 to_mat4(const Transformation& t) {
-	// 	auto model = vis::ext::identity<vis::mat4>();
-	// 	model = vis::ext::translate(model, vis::vec3(t.position, 0.0f));
-	// 	model = vis::ext::rotate(model, t.angle, vis::vec3(0.0f, 0.0f, 1.0f));
-	// 	model = vis::ext::scale(model, vis::vec3(t.scale, 1.0f));
-	// 	return model;
-	// }
+	struct Ball {};
 
 	constexpr int SCREEN_HEIGHT = 600;
 	constexpr std::ratio<4, 3> ASPECT_RATIO;
@@ -62,6 +47,9 @@ export {
 				switch (event->key.key) {
 				case SDLK_ESCAPE:
 					return SDL_AppResult::SDL_APP_SUCCESS;
+
+				case SDLK_R:
+					break;
 
 				case SDLK_SPACE: {
 					auto get_random = [](float min = 0.0f, float max = 1.0f) -> float {
@@ -197,7 +185,7 @@ void main()
 
 		void initialize_physics() {
 			auto world_def = vis::physics::WorldDef();
-			world_def.set_gravity(vis::vec2{0.0f, -9.81f});
+			world_def.set_gravity(vis::vec2{1.0f, -9.81f});
 			world = vis::physics::create_world(world_def);
 		}
 
@@ -265,6 +253,8 @@ void main()
 		void add_ball(float radius, vis::vec2 pos, vis::vec4 color) {
 			constexpr auto origin = vis::vec2{0.0f, 0.0f};
 			auto ball = entity_registry.create();
+
+			entity_registry.emplace<Ball>(ball);
 			entity_registry.emplace<vis::mesh::Mesh>(ball, vis::mesh::create_regular_shape(origin, radius, color, 20));
 
 			auto& transform = entity_registry.emplace<vis::physics::Transformation>(ball, vis::physics::Transformation{
@@ -296,7 +286,7 @@ void main()
 		static constexpr SDL_WindowFlags screen_flags = SDL_WINDOW_OPENGL;
 
 		std::optional<vis::opengl::Program> program{};
-		vis::registry entity_registry;
+		vis::ecs::registry entity_registry;
 		vis::ScreenProjection screen_proj;
 
 		std::optional<vis::physics::World> world;
