@@ -220,9 +220,7 @@ void main()
 																																										});
 			vis::physics::RigidBodyDef body_def;
 			body_def.set_position(transform.position).set_body_type(vis::physics::BodyType::fixed);
-			auto& rigid_body = entity_registry.emplace<vis::physics::RigidBody>(wall, vis::physics::RigidBody{
-																																										world->create_body(body_def),
-																																								});
+			auto& rigid_body = entity_registry.emplace<vis::physics::RigidBody>(wall, world->create_body(body_def));
 
 			auto wall_box = vis::physics::create_box2d(half_extent);
 			vis::physics::ShapeDef wall_shape;

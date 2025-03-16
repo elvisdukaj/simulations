@@ -68,26 +68,6 @@ class RigidBody {
 public:
 	friend class World;
 
-	RigidBody(RigidBody&) = delete;
-	RigidBody& operator=(RigidBody&) = delete;
-
-	RigidBody(RigidBody&& rhs) : id{rhs.id} {
-		rhs.id.index1 = std::numeric_limits<int32_t>::max();
-	}
-	RigidBody& operator=(RigidBody&& rhs) {
-		id = rhs.id;
-		rhs.id.index1 = std::numeric_limits<int32_t>::max();
-		return *this;
-	}
-
-	~RigidBody() {
-		if (id.index1 == std::numeric_limits<int32_t>::max()) {
-			return;
-		}
-
-		b2DestroyBody(id);
-	}
-
 	RigidBody& create_shape(const ShapeDef& shape, const Polygon& polygon);
 	RigidBody& create_shape(const ShapeDef& shape, const Circle& circle);
 
