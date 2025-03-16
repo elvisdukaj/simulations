@@ -190,7 +190,6 @@ void main()
 		void initialize_scene() {
 			constexpr auto wall_thickness = 0.6f;
 			constexpr auto half_wall_thickness = wall_thickness / 2.0f;
-			constexpr auto origin = vis::vec2{0.0f, 0.0f};
 			const auto half_screen_extent = screen_proj.half_world_extent;
 			constexpr auto x_offset = vis::vec2{half_wall_thickness, 0.0f};
 			constexpr auto y_offset = vis::vec2{0.0f, half_wall_thickness};
@@ -201,115 +200,58 @@ void main()
 			const auto vertical_half_extent = vis::vec2{half_screen_extent.x, half_wall_thickness};
 			const auto horizontal_half_extent = vis::vec2{half_wall_thickness, half_screen_extent.y};
 
-			const auto left_wall = entity_registry.create();
-			const auto right_wall = entity_registry.create();
-			const auto top_wall = entity_registry.create();
-			const auto bottom_wall = entity_registry.create();
-			const auto ball = entity_registry.create();
-
-			constexpr auto red = vis::vec4{1.0f, 0.0f, 0.0f, 1.0f};
+			constexpr auto ball_color = vis::vec4{1.0f, 0.0f, 0.0f, 1.0f};
 			constexpr auto wall_color = vis::vec4{0.0f, 0.5f, 0.2f, 1.0f};
-			{
-				entity_registry.emplace<vis::mesh::Mesh>(
-						left_wall, vis::mesh::create_rectangle_shape(origin, horizontal_half_extent, wall_color));
-				auto& transform = entity_registry.emplace<vis::physics::Transformation>(left_wall, vis::physics::Transformation{
-																																															 .position = left_pos,
-																																													 });
-				vis::physics::RigidBodyDef body_def;
-				body_def.set_position(transform.position).set_body_type(vis::physics::BodyType::fixed);
-				auto& rigid_body = entity_registry.emplace<vis::physics::RigidBody>(left_wall, vis::physics::RigidBody{
-																																													 world->create_body(body_def),
-																																											 });
 
-				// auto wall_box = vis::physics::b2MakeBox(horizontal_half_extent.x, horizontal_half_extent.y);
-				auto wall_box = vis::physics::create_box2d(horizontal_half_extent);
-				vis::physics::Shape wall_shape;
-				rigid_body.create_shape(wall_shape, wall_box);
-			}
+			add_wall(horizontal_half_extent, left_pos, wall_color);
+			add_wall(horizontal_half_extent, right_pos, wall_color);
+			add_wall(vertical_half_extent, top_pos, wall_color);
+			add_wall(vertical_half_extent, bottom_pos, wall_color);
 
-			// {
-			// 	entity_registry.emplace<vis::mesh::Mesh>(
-			// 			right_wall, vis::mesh::create_rectangle_shape(origin, horizontal_half_extent, wall_color));
-			// 	auto& transform = entity_registry.emplace<Transformation>(right_wall, Transformation{
-			// 																																						.position = right_pos,
-			// 																																				});
-			// 	auto body_def = vis::physics::b2DefaultBodyDef();
-			// 	body_def.position = vis::physics::b2Vec2{transform.position.x, transform.position.y};
-			// 	body_def.type = vis::physics::b2BodyType::b2_staticBody;
-			// 	auto& rigid_body = entity_registry.emplace<RigidBody>(right_wall, RigidBody{
-			// 																																				world->create_body(&body_def),
-			// 																																		});
-			//
-			// 	auto wall_box = vis::physics::b2MakeBox(horizontal_half_extent.x, horizontal_half_extent.y);
-			// 	auto wall_shape = vis::physics::b2DefaultShapeDef();
-			// 	vis::physics::b2CreatePolygonShape(rigid_body, &wall_shape, &wall_box);
-			// }
-			//
-			// {
-			// 	entity_registry.emplace<vis::mesh::Mesh>(
-			// 			top_wall, vis::mesh::create_rectangle_shape(origin, vertical_half_extent, wall_color));
-			// 	auto& transform = entity_registry.emplace<Transformation>(top_wall, Transformation{
-			// 																																					.position = top_pos,
-			// 																																			});
-			// 	auto body_def = vis::physics::b2DefaultBodyDef();
-			// 	body_def.position = vis::physics::b2Vec2{transform.position.x, transform.position.y};
-			// 	body_def.type = vis::physics::b2BodyType::b2_staticBody;
-			// 	auto& rigid_body = entity_registry.emplace<RigidBody>(top_wall, RigidBody{
-			// 																																			world->create_body(&body_def),
-			// 																																	});
-			//
-			// 	auto wall_box = vis::physics::b2MakeBox(vertical_half_extent.x, vertical_half_extent.y);
-			// 	auto wall_shape = vis::physics::b2DefaultShapeDef();
-			// 	vis::physics::b2CreatePolygonShape(rigid_body, &wall_shape, &wall_box);
-			// }
-			//
-			// {
-			// 	entity_registry.emplace<vis::mesh::Mesh>(
-			// 			bottom_wall, vis::mesh::create_rectangle_shape(origin, vertical_half_extent, wall_color));
-			// 	auto& transform = entity_registry.emplace<Transformation>(bottom_wall, Transformation{
-			// 																																						 .position = bottom_pos,
-			// 																																				 });
-			//
-			// 	vis::physics::RigidBodyDef rigid_body_def;
-			// 	rigid_body_def.set_position(transform.position);
-			// 	rigid_body_def.set_body_type(vis::physics::BodyType::fixed);
-			// 	auto body_def = vis::physics::b2DefaultBodyDef();
-			// 	body_def.position = vis::physics::b2Vec2{transform.position.x, transform.position.y};
-			// 	body_def.type = vis::physics::b2BodyType::b2_staticBody;
-			// 	auto& rigid_body = entity_registry.emplace<RigidBody>(bottom_wall, RigidBody{
-			// 																																				 world->create_body(&body_def),
-			// 																																		 });
-			//
-			// 	auto wall_box = vis::physics::b2MakeBox(vertical_half_extent.x, vertical_half_extent.y);
-			// 	auto wall_shape = vis::physics::b2DefaultShapeDef();
-			// 	vis::physics::b2CreatePolygonShape(rigid_body, &wall_shape, &wall_box);
-			// }
-			//
-			// {
-			// 	constexpr float radius = 1.0f;
-			// 	entity_registry.emplace<vis::mesh::Mesh>(ball, vis::mesh::create_regular_shape(origin, radius, red, 20));
-			// 	auto& transform = entity_registry.emplace<Transformation>(ball, Transformation{
-			// 																																			.position = origin,
-			// 																																	});
-			// 	auto circle = vis::physics::b2Circle{
-			// 			.center = {origin.x, origin.y},
-			// 			.radius = radius,
-			// 	};
-			// 	auto body_def = vis::physics::b2DefaultBodyDef();
-			// 	body_def.isBullet = true;
-			// 	body_def.position = vis::physics::b2Vec2{transform.position.x, transform.position.y};
-			// 	body_def.type = vis::physics::b2BodyType::b2_dynamicBody;
-			// 	auto& rigid_body = entity_registry.emplace<RigidBody>(ball, RigidBody{
-			// 																																	world->create_body(&body_def),
-			// 																															});
-			//
-			// 	auto shape_def = vis::physics::b2DefaultShapeDef();
-			// 	shape_def.restitution = .75f;
-			// 	auto shape = vis::physics::b2CreateCircleShape(rigid_body, &shape_def, &circle);
-			//
-			// 	vis::physics::b2Body_ApplyForce(rigid_body, {.x = 4950.0f, .y = 4850.0f},
-			// 																	vis::physics::b2Body_GetLocalCenterOfMass(rigid_body), true);
-			// }
+			add_ball(0.6, vis::vec2{10.0f, 0.0f}, ball_color);
+		}
+
+		void add_wall(vis::vec2 half_extent, vis::vec2 pos, vis::vec4 color) {
+			constexpr auto origin = vis::vec2{0.0f, 0.0f};
+			auto wall = entity_registry.create();
+			entity_registry.emplace<vis::mesh::Mesh>(wall, vis::mesh::create_rectangle_shape(origin, half_extent, color));
+			auto& transform = entity_registry.emplace<vis::physics::Transformation>(wall, vis::physics::Transformation{
+																																												.position = pos,
+																																										});
+			vis::physics::RigidBodyDef body_def;
+			body_def.set_position(transform.position).set_body_type(vis::physics::BodyType::fixed);
+			auto& rigid_body = entity_registry.emplace<vis::physics::RigidBody>(wall, vis::physics::RigidBody{
+																																										world->create_body(body_def),
+																																								});
+
+			auto wall_box = vis::physics::create_box2d(half_extent);
+			vis::physics::ShapeDef wall_shape;
+			rigid_body.create_shape(wall_shape, wall_box);
+		}
+
+		void add_ball(float radius, vis::vec2 pos, vis::vec4 color) {
+			constexpr auto origin = vis::vec2{0.0f, 0.0f};
+			auto ball = entity_registry.create();
+			entity_registry.emplace<vis::mesh::Mesh>(ball, vis::mesh::create_regular_shape(origin, radius, color, 20));
+
+			auto& transform = entity_registry.emplace<vis::physics::Transformation>(ball, vis::physics::Transformation{
+																																												.position = origin,
+																																										});
+			auto circle = vis::physics::Circle{
+					.center = origin,
+					.radius = radius,
+			};
+
+			vis::physics::RigidBodyDef body_def;
+			body_def.set_position(transform.position);
+			body_def.set_body_type(vis::physics::BodyType::dynamic);
+			auto& rigid_body = entity_registry.emplace<vis::physics::RigidBody>(ball, vis::physics::RigidBody{
+																																										world->create_body(body_def),
+																																								});
+
+			vis::physics::ShapeDef shape_def;
+			shape_def.set_restitution(0.7);
+			rigid_body.create_shape(shape_def, circle);
 		}
 
 	private:

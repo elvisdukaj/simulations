@@ -10,6 +10,11 @@ import :math;
 
 export namespace vis::physics {
 
+class World;
+class ShapeDef;
+class Polygon;
+struct Circle;
+
 enum class BodyType {
 	fixed = 0,
 	kinematic = 1,
@@ -37,10 +42,6 @@ public:
 private:
 	::b2BodyDef def;
 };
-
-class World;
-class Shape;
-class Polygon;
 
 struct Rotation {
 	float cos_angle, sin_angle;
@@ -87,7 +88,8 @@ public:
 		b2DestroyBody(id);
 	}
 
-	RigidBody& create_shape(const Shape& shape, const Polygon& polygon);
+	RigidBody& create_shape(const ShapeDef& shape, const Polygon& polygon);
+	RigidBody& create_shape(const ShapeDef& shape, const Circle& circle);
 
 	Transformation get_transform() const {
 		Transformation res;
@@ -186,9 +188,14 @@ private:
 	b2Polygon poly;
 };
 
-class Shape {
+class ShapeDef {
 public:
-	Shape() : def{b2DefaultShapeDef()} {}
+	ShapeDef() : def{b2DefaultShapeDef()} {}
+
+	ShapeDef& set_restitution(float restitution) {
+		def.restitution = restitution;
+		return *this;
+	}
 
 	explicit operator const b2ShapeDef*() const {
 		return &def;
@@ -203,44 +210,23 @@ Polygon create_box2d(vis::vec2 half_extent) {
 	return Polygon{poly};
 }
 
-RigidBody& RigidBody::create_shape(const Shape& shape, const Polygon& polygon) {
+struct Circle {
+	vec2 center{};
+	float radius{};
+
+	explicit operator const b2Circle*() const {
+		return reinterpret_cast<const b2Circle*>(this);
+	}
+};
+
+RigidBody& RigidBody::create_shape(const ShapeDef& shape, const Polygon& polygon) {
 	b2CreatePolygonShape(id, static_cast<const b2ShapeDef*>(shape), static_cast<const b2Polygon*>(polygon));
 	return *this;
 }
 
-// TODO: We want to wrap the underlying library and change the naming
-
-// data types
-using ::b2BodyDef;
-using ::b2BodyId;
-using ::b2BodyType;
-using ::b2Circle;
-using ::b2Polygon;
-using ::b2ShapeDef;
-using ::b2Vec2;
-using ::b2WorldDef;
-using ::b2WorldId;
-
-// functions
-using ::b2Body_ApplyForce;
-using ::b2Body_GetLinearVelocity;
-using ::b2Body_GetLocalCenterOfMass;
-using ::b2Body_GetMass;
-using ::b2Body_GetPosition;
-using ::b2Body_GetRotation;
-using ::b2Body_GetTransform;
-using ::b2Body_GetWorldCenterOfMass;
-using ::b2CreateBody;
-using ::b2CreateCircleShape;
-using ::b2CreatePolygonShape;
-using ::b2CreateWorld;
-using ::b2DefaultBodyDef;
-using ::b2DefaultShapeDef;
-using ::b2DefaultWorldDef;
-using ::b2DestroyWorld;
-using ::b2MakeBox;
-using ::b2MakeSquare;
-// using ::b2Make
-using ::b2World_Step;
+RigidBody& RigidBody::create_shape(const ShapeDef& shape, const Circle& circle) {
+	b2CreateCircleShape(id, static_cast<const b2ShapeDef*>(shape), static_cast<const b2Circle*>(circle));
+	return *this;
+}
 
 } // namespace vis::physics
