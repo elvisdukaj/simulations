@@ -119,10 +119,7 @@ export {
 
 	private:
 		explicit App(SDL_Window* window, vis::engine::Engine& engine)
-				: window{window},
-					engine(engine),
-					program{std::nullopt},
-					circle{vis::mesh::create_regular_shape(vis::vec2{}, 0.5f, vis::vec4{}, 50)} {
+				: window{window}, engine(engine), program{std::nullopt} {
 			initialize_video();
 			initialize_physics();
 			initialize_scene();
@@ -225,7 +222,9 @@ void main()
 			add_wall(vertical_half_extent, top_pos, wall_color);
 			add_wall(vertical_half_extent, bottom_pos, wall_color);
 
-			add_ball(0.6, vis::vec2{10.0f, 0.0f}, ball_color);
+			add_box(vis::vec2{5.0f, 0.2f}, vis::vec2{}, wall_color);
+
+			add_ball(0.6, vis::vec2{0.0f, 10.0f}, ball_color);
 		}
 
 		void add_wall(vis::vec2 half_extent, vis::vec2 pos, vis::vec4 color) {
@@ -237,6 +236,25 @@ void main()
 																																										});
 			vis::physics::RigidBodyDef body_def;
 			body_def.set_position(transform.position).set_body_type(vis::physics::BodyType::fixed);
+			auto& rigid_body = entity_registry.emplace<vis::physics::RigidBody>(wall, world->create_body(body_def));
+
+			auto wall_box = vis::physics::create_box2d(half_extent);
+			vis::physics::ShapeDef wall_shape;
+			rigid_body.create_shape(wall_shape, wall_box);
+		}
+
+		void add_box(vis::vec2 half_extent, vis::vec2 pos, vis::vec4 color) {
+			constexpr auto origin = vis::vec2{0.0f, 0.0f};
+			auto wall = entity_registry.create();
+			entity_registry.emplace<vis::mesh::Mesh>(wall, vis::mesh::create_rectangle_shape(origin, half_extent, color));
+			const auto angle = vis::radians(45.0f);
+			vis::physics::Rotation rot{.cos_angle = std::cos(angle), .sin_angle = std::sin(angle)};
+			auto& transform = entity_registry.emplace<vis::physics::Transformation>(wall, vis::physics::Transformation{
+																																												.position = pos,
+																																												.rotation = rot,
+																																										});
+			vis::physics::RigidBodyDef body_def;
+			body_def.set_position(transform.position).set_body_type(vis::physics::BodyType::fixed).set_rotation(rot);
 			auto& rigid_body = entity_registry.emplace<vis::physics::RigidBody>(wall, world->create_body(body_def));
 
 			auto wall_box = vis::physics::create_box2d(half_extent);
@@ -270,8 +288,6 @@ void main()
 		}
 
 	private:
-		const float border_thickness = 0.1f;
-
 		SDL_Window* window = nullptr;
 		vis::engine::Engine& engine;
 
@@ -281,7 +297,6 @@ void main()
 
 		std::optional<vis::opengl::Program> program{};
 		vis::registry entity_registry;
-		vis::mesh::Mesh circle;
 		vis::ScreenProjection screen_proj;
 
 		std::optional<vis::physics::World> world;

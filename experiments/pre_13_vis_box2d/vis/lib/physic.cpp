@@ -15,6 +15,10 @@ class ShapeDef;
 class Polygon;
 struct Circle;
 
+struct Rotation {
+	float cos_angle, sin_angle;
+};
+
 enum class BodyType {
 	fixed = 0,
 	kinematic = 1,
@@ -35,16 +39,17 @@ public:
 		return *this;
 	}
 
+	RigidBodyDef& set_rotation(Rotation rot) {
+		def.rotation = {.c = rot.cos_angle, .s = rot.sin_angle};
+		return *this;
+	}
+
 	explicit operator const b2BodyDef*() const {
 		return &def;
 	}
 
 private:
 	::b2BodyDef def;
-};
-
-struct Rotation {
-	float cos_angle, sin_angle;
 };
 
 struct Transformation {
@@ -55,8 +60,8 @@ struct Transformation {
 	mat4 get_model() const {
 		auto model = vis::ext::identity<vis::mat4>();
 		model[0][0] = rotation.cos_angle;
-		model[1][0] = rotation.sin_angle;
-		model[0][1] = -rotation.sin_angle;
+		model[1][0] = -rotation.sin_angle;
+		model[0][1] = rotation.sin_angle;
 		model[1][1] = rotation.cos_angle;
 		model[3][0] = position.x;
 		model[3][1] = position.y;
