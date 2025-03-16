@@ -37,6 +37,7 @@ export {
 	class App {
 	public:
 		static App* create() {
+			srand(SDL_GetTicks());
 			static SDL_Window* window = SDL_CreateWindow("Hello OpenGL", SCREEN_WIDTH, SCREEN_HEIGHT, screen_flags);
 
 			if (not window) {
@@ -61,6 +62,22 @@ export {
 				switch (event->key.key) {
 				case SDLK_ESCAPE:
 					return SDL_AppResult::SDL_APP_SUCCESS;
+
+				case SDLK_SPACE: {
+					auto get_random = [](float min = 0.0f, float max = 1.0f) -> float {
+						auto r = static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
+						return (max - min) * r + min;
+					};
+
+					const float radius = get_random(.5f, 2.0f);
+					const auto col = vis::vec4{
+							get_random(),
+							get_random(),
+							get_random(),
+							1.0f,
+					};
+					add_ball(radius, vis::vec2{get_random(-10.0, 10.0f), 8.0f}, col);
+				} break;
 				default:
 					break;
 				}
@@ -233,7 +250,7 @@ void main()
 			entity_registry.emplace<vis::mesh::Mesh>(ball, vis::mesh::create_regular_shape(origin, radius, color, 20));
 
 			auto& transform = entity_registry.emplace<vis::physics::Transformation>(ball, vis::physics::Transformation{
-																																												.position = origin,
+																																												.position = pos,
 																																										});
 			auto circle = vis::physics::Circle{
 					.center = origin,
@@ -248,7 +265,7 @@ void main()
 																																								});
 
 			vis::physics::ShapeDef shape_def;
-			shape_def.set_restitution(0.7);
+			shape_def.set_restitution(1.0);
 			rigid_body.create_shape(shape_def, circle);
 		}
 

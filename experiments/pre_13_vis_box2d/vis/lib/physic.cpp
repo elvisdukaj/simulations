@@ -73,9 +73,9 @@ public:
 
 	Transformation get_transform() const {
 		Transformation res;
-		auto t = b2Body_GetTransform(id);
-		res.position = vec2{t.p.x, t.p.y};
-		res.rotation = {t.q.c, t.q.s};
+		const auto& [p, q] = b2Body_GetTransform(id);
+		res.position = vec2{p.x, p.y};
+		res.rotation = {q.c, q.s};
 		return res;
 	}
 
