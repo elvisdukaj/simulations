@@ -64,7 +64,9 @@ export {
 							get_random(),
 							1.0f,
 					};
-					add_ball(radius, vis::vec2{get_random(-10.0, 10.0f), 8.0f}, col);
+					const auto vel = vis::vec2{get_random(-10.0f, 10.0f), get_random(-10.0f, 10.0f)};
+					const auto pos = vis::vec2{get_random(-10.0, 10.0f), 8.0f};
+					add_ball(radius, pos, vel, col);
 				} break;
 				default:
 					break;
@@ -185,7 +187,7 @@ void main()
 
 		void initialize_physics() {
 			auto world_def = vis::physics::WorldDef();
-			world_def.set_gravity(vis::vec2{1.0f, -9.81f});
+			world_def.set_gravity(vis::vec2{0.0f, 0.0f * -9.81f});
 			world = vis::physics::create_world(world_def);
 		}
 
@@ -211,8 +213,6 @@ void main()
 			add_wall(vertical_half_extent, bottom_pos, wall_color);
 
 			add_box(vis::vec2{5.0f, 0.2f}, vis::vec2{}, wall_color);
-
-			add_ball(0.6, vis::vec2{0.0f, 10.0f}, ball_color);
 		}
 
 		void add_wall(vis::vec2 half_extent, vis::vec2 pos, vis::vec4 color) {
@@ -250,7 +250,7 @@ void main()
 			rigid_body.create_shape(wall_shape, wall_box);
 		}
 
-		void add_ball(float radius, vis::vec2 pos, vis::vec4 color) {
+		void add_ball(float radius, vis::vec2 pos, vis::vec2 vel, vis::vec4 color) {
 			constexpr auto origin = vis::vec2{0.0f, 0.0f};
 			auto ball = entity_registry.create();
 
@@ -266,14 +266,17 @@ void main()
 			};
 
 			vis::physics::RigidBodyDef body_def;
-			body_def.set_position(transform.position);
-			body_def.set_body_type(vis::physics::BodyType::dynamic);
+			body_def.set_position(transform.position)
+					.set_body_type(vis::physics::BodyType::dynamic)
+					.set_is_bullet(true)
+					.set_linear_velocity(vel);
+
 			auto& rigid_body = entity_registry.emplace<vis::physics::RigidBody>(ball, vis::physics::RigidBody{
 																																										world->create_body(body_def),
 																																								});
 
 			vis::physics::ShapeDef shape_def;
-			shape_def.set_restitution(1.0);
+			shape_def.set_restitution(1.0).set_friction(1.0f);
 			rigid_body.create_shape(shape_def, circle);
 		}
 

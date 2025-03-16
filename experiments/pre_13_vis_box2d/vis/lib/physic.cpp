@@ -38,9 +38,18 @@ public:
 		def.position = b2Vec2(pos.x, pos.y);
 		return *this;
 	}
+	RigidBodyDef& set_linear_velocity(vis::vec2 vel) {
+		def.linearVelocity = b2Vec2(vel.x, vel.y);
+		return *this;
+	}
 
 	RigidBodyDef& set_rotation(Rotation rot) {
 		def.rotation = {.c = rot.cos_angle, .s = rot.sin_angle};
+		return *this;
+	}
+
+	RigidBodyDef& set_is_bullet(bool is_bullet) {
+		def.isBullet = is_bullet;
 		return *this;
 	}
 
@@ -92,7 +101,9 @@ private:
 
 class WorldDef {
 public:
-	WorldDef() : def{::b2DefaultWorldDef()} {}
+	WorldDef() : def{::b2DefaultWorldDef()} {
+		def.restitutionThreshold = 1.0f;
+	}
 
 	void set_gravity(vec2 g) {
 		def.gravity = b2Vec2(g.x, g.y);
@@ -179,6 +190,11 @@ public:
 
 	ShapeDef& set_restitution(float restitution) {
 		def.restitution = restitution;
+		return *this;
+	}
+
+	ShapeDef& set_friction(float restitution) {
+		def.friction = 0.0f;
 		return *this;
 	}
 
